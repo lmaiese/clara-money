@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, ForeignKey, text
+from sqlalchemy import String, Integer, ForeignKey, DateTime, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -17,7 +17,7 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     stripe_customer_id: Mapped[str | None] = mapped_column(String, nullable=True)
     plan: Mapped[str] = mapped_column(String, default="free")
 
@@ -38,6 +38,6 @@ class Profile(Base):
     goal: Mapped[str | None] = mapped_column(String, nullable=True)
     horizon_years: Mapped[int | None] = mapped_column(Integer, nullable=True)
     onboarding_step: Mapped[int] = mapped_column(Integer, default=0)
-    updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
     user: Mapped["User"] = relationship(back_populates="profile")

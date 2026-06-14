@@ -24,7 +24,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password_hash', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('stripe_customer_id', sa.String(), nullable=True),
     sa.Column('plan', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -40,7 +40,7 @@ def upgrade() -> None:
     sa.Column('goal', sa.String(), nullable=True),
     sa.Column('horizon_years', sa.Integer(), nullable=True),
     sa.Column('onboarding_step', sa.Integer(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id')
     )
