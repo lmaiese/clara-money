@@ -85,7 +85,10 @@ def _run_narrative_generation(scenario_id: str, profile_data: dict, math_data: M
                     max_tokens=1024,
                     messages=[{"role": "user", "content": _build_prompt(profile, math_data)}],
                 )
-                narratives = json.loads(response.content[0].text)
+                parsed = json.loads(response.content[0].text)
+                _REQUIRED = {"intro", "sicuro", "bilanciato", "crescita"}
+                if _REQUIRED.issubset(parsed.keys()):
+                    narratives = parsed
             except Exception:
                 pass
 
