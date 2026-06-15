@@ -31,3 +31,12 @@ htmlcov/
 
 # Alembic
 # (versions tracked intentionally)
+
+# Node
+node_modules/
+.next/
+.env.local
+.env.*.local
+
+# Python (additional)
+*.pyc
