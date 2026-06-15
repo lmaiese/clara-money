@@ -28,7 +28,6 @@ def decode_token(token: str) -> uuid.UUID:
 
 
 def create_reset_token(user_id: uuid.UUID) -> str:
-    from datetime import timedelta
     expire = datetime.now(timezone.utc) + timedelta(hours=1)
     return jwt.encode(
         {"sub": str(user_id), "purpose": "password-reset", "exp": expire},
