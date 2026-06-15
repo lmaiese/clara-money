@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.config import settings
@@ -95,9 +95,12 @@ def test_run_digest_pro_user_gets_email(client, db, digest_settings, monkeypatch
     monkeypatch.setattr(settings, "anthropic_api_key", "sk-fake")
     user = pro_user_with_profile
 
-    # Scenario precedente con valori noti
+    # Scenario precedente del mese scorso con valori noti
+    now = datetime.now(timezone.utc)
+    last_month = now.replace(day=1) - timedelta(days=1)
     prev = Scenario(
         user_id=user.id,
+        generated_at=last_month,
         profile_snapshot={
             "age": 30, "monthly_income": 2000, "monthly_expenses": 1000,
             "liquid_savings": 5000, "existing_investments": 0,
