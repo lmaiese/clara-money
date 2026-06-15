@@ -14,3 +14,4 @@ pymupdf==1.24.14
 pymupdf4llm==0.0.17
 openai==1.58.1
 langchain-text-splitters==0.3.3
+stripe>=5.0.0
