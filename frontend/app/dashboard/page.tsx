@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
   return (
     <main className="dashboard-layout">
-      <Suspense>
+      <Suspense fallback={null}>
         <UpgradeBanner />
       </Suspense>
       <h1>I tuoi scenari</h1>
