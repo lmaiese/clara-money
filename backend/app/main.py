@@ -1,16 +1,29 @@
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.auth.router import router as auth_router
 from app.profiles.router import router as profiles_router
 from app.scenarios.router import router as scenarios_router
+from app.config import settings, JWT_SECRET_IS_DEV_DEFAULT
 
-app = FastAPI(title="Clara Money API")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if JWT_SECRET_IS_DEV_DEFAULT:
+        logger.warning("⚠️  JWT_SECRET is using the dev default — set JWT_SECRET in .env before deploying")
+    yield
+
+
+app = FastAPI(title="Clara Money API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

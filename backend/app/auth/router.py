@@ -5,10 +5,11 @@ from app.models import User, Profile
 from app.schemas import RegisterRequest, LoginRequest
 from app.auth.service import hash_password, verify_password, create_token
 from app.auth.dependencies import get_current_user
+from app.config import settings
 
 router = APIRouter()
 
-COOKIE_OPTS = dict(httponly=True, samesite="lax", secure=False, max_age=3600 * 24 * 7)
+COOKIE_OPTS = dict(httponly=True, samesite="lax", secure=settings.cookie_secure, max_age=3600 * 24 * 7)
 
 
 @router.post("/register")
