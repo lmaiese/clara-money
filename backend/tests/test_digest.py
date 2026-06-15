@@ -38,10 +38,12 @@ def pro_user_with_profile(client, db):
 
 def _make_resend_mock():
     """Helper: mock per httpx.AsyncClient usato come context manager async."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()  # non solleva, simula 2xx
     mock_aclient = MagicMock()
     mock_aclient.__aenter__ = AsyncMock(return_value=mock_aclient)
     mock_aclient.__aexit__ = AsyncMock(return_value=None)
-    mock_aclient.post = AsyncMock()
+    mock_aclient.post = AsyncMock(return_value=mock_response)
     return mock_aclient
 
 
@@ -88,6 +90,30 @@ def test_run_digest_skips_free_users(client, db, digest_settings):
     assert resp.status_code == 200
     assert resp.json() == {"sent": 0, "skipped": 1, "errors": 0}
     mock_aclient.post.assert_not_called()
+
+
+def test_run_digest_email_failure_does_not_commit_scenario(client, db, digest_settings, pro_user_with_profile):
+    """Se Resend ritorna errore → scenario NON salvato in DB, errors=1, retry possibile il run successivo."""
+    import httpx as _httpx
+    user = pro_user_with_profile
+
+    # Mock Resend che ritorna 422
+    mock_response = MagicMock()
+    mock_response.raise_for_status.side_effect = _httpx.HTTPStatusError(
+        "422 Unprocessable Entity", request=MagicMock(), response=MagicMock()
+    )
+    mock_aclient = MagicMock()
+    mock_aclient.__aenter__ = AsyncMock(return_value=mock_aclient)
+    mock_aclient.__aexit__ = AsyncMock(return_value=None)
+    mock_aclient.post = AsyncMock(return_value=mock_response)
+
+    with patch("app.admin.digest.httpx.AsyncClient", return_value=mock_aclient):
+        resp = client.post("/admin/run-digest", headers=AUTH)
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": 0, "skipped": 0, "errors": 1}
+    # Scenario NON committato → retry possibile al prossimo run
+    assert db.query(Scenario).filter_by(user_id=user.id).count() == 0
 
 
 def test_run_digest_pro_user_gets_email(client, db, digest_settings, monkeypatch, pro_user_with_profile):

@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import logging
 from datetime import datetime, timezone
@@ -6,7 +7,7 @@ from types import SimpleNamespace
 
 import httpx
 from anthropic import Anthropic
-from sqlalchemy import extract, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -47,7 +48,7 @@ async def send_digest_email(
     now = datetime.now(timezone.utc)
     subject = f"Il tuo aggiornamento mensile Clara — {MONTHS[now.month]} {now.year}"
 
-    html = f"""<p>Ciao {to_email},</p>
+    html_content = f"""<p>Ciao {html.escape(to_email)},</p>
 <p>Il tuo piano finanziario aggiornato per <strong>{profile.horizon_years} anni</strong>.</p>
 <table cellpadding="8">
   <tr>
@@ -71,20 +72,18 @@ async def send_digest_email(
 <p style="font-size:12px;color:#6b7280">Clara · Problemi? Scrivi a
 <a href="mailto:support@claramoney.it">support@claramoney.it</a></p>"""
 
-    try:
-        async with httpx.AsyncClient() as http:
-            await http.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {settings.resend_api_key}"},
-                json={
-                    "from": "Clara <noreply@claramoney.it>",
-                    "to": [to_email],
-                    "subject": subject,
-                    "html": html,
-                },
-            )
-    except Exception:
-        logger.exception("Failed to send digest email to %s", to_email)
+    async with httpx.AsyncClient(timeout=10.0) as http:
+        response = await http.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+            json={
+                "from": "Clara <noreply@claramoney.it>",
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+            },
+        )
+        response.raise_for_status()
 
 
 async def run_monthly_digest(db: Session) -> dict:
@@ -95,6 +94,18 @@ async def run_monthly_digest(db: Session) -> dict:
         select(User).join(Profile)
     ).scalars().all()
 
+    logger.info("Digest job started: %d Pro users found", len(users))
+
+    # Fix 5: Anthropic client creato una volta sola fuori dal loop
+    ai = Anthropic(api_key=settings.anthropic_api_key, max_retries=1) if settings.anthropic_api_key else None
+
+    # Fix 3: range datetime UTC esplicito per dedup timezone-safe
+    if now.month == 12:
+        month_end = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        month_end = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+
     for user in users:
         email = user.email
         user_id = user.id
@@ -103,18 +114,20 @@ async def run_monthly_digest(db: Session) -> dict:
         try:
             # 1. Solo utenti pro con profilo completo
             if user.plan != "pro" or not profile or profile.onboarding_step < 5 or not profile.horizon_years:
+                logger.info("Skipping user %s: incomplete profile", user_id)
                 skipped += 1
                 continue
 
-            # 2. Dedup: skip se già inviato questo mese
+            # 2. Dedup: skip se già inviato questo mese (timezone-safe)
             existing = db.execute(
                 select(Scenario.id)
                 .where(Scenario.user_id == user_id)
-                .where(extract("year", Scenario.generated_at) == now.year)
-                .where(extract("month", Scenario.generated_at) == now.month)
+                .where(Scenario.generated_at >= month_start)
+                .where(Scenario.generated_at < month_end)
                 .limit(1)
             ).first()
             if existing:
+                logger.info("Skipping user %s: already sent this month", user_id)
                 skipped += 1
                 continue
 
@@ -134,14 +147,14 @@ async def run_monthly_digest(db: Session) -> dict:
             )
             math_data = compute_scenarios(capital, monthly_pmt, profile.horizon_years)
 
-            # 5. Delta (None se primo scenario)
+            # 5. Delta (None se primo scenario) — schema-safe
             delta = None
             if prev_scenario and prev_scenario.math_data:
-                prev = prev_scenario.math_data
-                delta = {
-                    k: math_data[k][-1] - prev[k][-1]
-                    for k in ["sicuro", "bilanciato", "crescita"]
-                }
+                try:
+                    prev = prev_scenario.math_data
+                    delta = {k: math_data[k][-1] - prev[k][-1] for k in ["sicuro", "bilanciato", "crescita"]}
+                except (KeyError, IndexError, TypeError):
+                    logger.warning("Could not compute delta for user %s: legacy math_data schema", user_id)
 
             # 6. Narrativa Claude (timeout 30s) o fallback template
             profile_ns = SimpleNamespace(
@@ -154,9 +167,8 @@ async def run_monthly_digest(db: Session) -> dict:
                 horizon_years=profile.horizon_years,
             )
             narratives = None
-            if settings.anthropic_api_key:
+            if ai is not None:
                 try:
-                    ai = Anthropic(api_key=settings.anthropic_api_key)
                     response = await asyncio.to_thread(
                         ai.messages.create,
                         model=settings.claude_model,
@@ -172,7 +184,7 @@ async def run_monthly_digest(db: Session) -> dict:
             if narratives is None:
                 narratives = _build_fallback(profile_ns, math_data)
 
-            # 7. Salva nuovo Scenario (profile_snapshot NOT NULL)
+            # 7. Prepara nuovo Scenario (non ancora committato)
             profile_snapshot = {
                 "age": profile.age,
                 "monthly_income": profile.monthly_income,
@@ -190,10 +202,13 @@ async def run_monthly_digest(db: Session) -> dict:
                 narrative_ready=True,
             )
             db.add(scenario)
-            db.commit()
 
-            # 8. Email dopo commit — se fallisce, scenario è già persistito
+            # 8. Email PRIMA del commit — se fallisce, exception → per-user except → db.rollback()
             await send_digest_email(email, profile_ns, math_data, delta, narratives)
+
+            # 9. Commit SOLO se email ha avuto successo
+            db.commit()
+            logger.info("Digest sent to user %s (delta=%s)", user_id, delta is not None)
             sent += 1
 
         except Exception:
@@ -201,4 +216,5 @@ async def run_monthly_digest(db: Session) -> dict:
             db.rollback()
             errors += 1
 
+    logger.info("Digest job completed: sent=%d skipped=%d errors=%d", sent, skipped, errors)
     return {"sent": sent, "skipped": skipped, "errors": errors}
