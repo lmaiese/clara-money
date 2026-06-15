@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, ForeignKey, DateTime, text
+from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -41,3 +42,19 @@ class Profile(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
     user: Mapped["User"] = relationship(back_populates="profile")
+
+
+class Scenario(Base):
+    __tablename__ = "scenarios"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()")
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    profile_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    math_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    narratives: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    narrative_ready: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
