@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Literal
 import uuid
@@ -71,5 +72,15 @@ class ProfileResponse(BaseModel):
     goal: str | None
     horizon_years: int | None
     onboarding_step: int
+
+    model_config = {"from_attributes": True}
+
+
+class ScenarioResponse(BaseModel):
+    scenario_id: uuid.UUID
+    math_data: dict
+    narratives: dict | None
+    narrative_ready: bool
+    generated_at: datetime
 
     model_config = {"from_attributes": True}
