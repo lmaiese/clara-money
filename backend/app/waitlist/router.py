@@ -13,7 +13,7 @@ class WaitlistRequest(BaseModel):
     email: EmailStr
 
 
-@router.post("/waitlist")
+@router.post("/waitlist", status_code=201)
 def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
     email = body.email.lower()
     existing = db.query(Waitlist).filter_by(email=email).first()
@@ -30,4 +30,7 @@ def get_waitlist(
     _: None = Depends(_verify_secret),
 ):
     entries = db.query(Waitlist).order_by(Waitlist.joined_at.desc()).all()
-    return {"count": len(entries), "emails": [e.email for e in entries]}
+    return {
+        "count": len(entries),
+        "entries": [{"email": e.email, "joined_at": e.joined_at.isoformat()} for e in entries],
+    }
