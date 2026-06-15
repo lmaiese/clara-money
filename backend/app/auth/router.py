@@ -56,7 +56,7 @@ async def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get
     user = db.query(User).filter(User.email == body.email.lower()).first()
     if user:
         token = create_reset_token(user.id)
-        reset_link = f"http://localhost:3000/reset-password?token={token}"
+        reset_link = f"{settings.frontend_url}/reset-password?token={token}"
         await send_reset_email(user.email, reset_link)
     return {"message": "Se l'email esiste, riceverai un link di reset"}
 

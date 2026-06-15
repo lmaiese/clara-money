@@ -30,8 +30,8 @@ async def create_checkout(user: User = Depends(get_current_user)):
             "quantity": 1,
         }],
         client_reference_id=str(user.id),
-        success_url="http://localhost:3000/dashboard?upgrade=success",
-        cancel_url="http://localhost:3000/dashboard",
+        success_url=f"{settings.frontend_url}/dashboard?upgrade=success",
+        cancel_url=f"{settings.frontend_url}/dashboard",
     )
     return {"checkout_url": session.url}
 
@@ -58,6 +58,14 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             if user:
                 user.plan = "pro"
                 user.stripe_customer_id = stripe_customer_id
+                db.commit()
+
+    elif event["type"] == "customer.subscription.deleted":
+        stripe_customer_id = event["data"]["object"].get("customer")
+        if stripe_customer_id:
+            user = db.query(User).filter_by(stripe_customer_id=stripe_customer_id).first()
+            if user:
+                user.plan = "free"
                 db.commit()
 
     return {"status": "ok"}
