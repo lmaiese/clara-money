@@ -1,12 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { apiFetch, ApiError } from '@/lib/api'
-import type { MathData, Narratives, ScenarioResponse } from '@/lib/types'
+import type { MathData, Narratives, Source, ScenarioResponse } from '@/lib/types'
 
 type DashboardState =
   | { status: 'loading' }
   | { status: 'math_ready'; mathData: MathData }
-  | { status: 'narrative_ready'; mathData: MathData; narratives: Narratives }
+  | { status: 'narrative_ready'; mathData: MathData; narratives: Narratives; sources: Source[] | null }
   | { status: 'error'; message: string }
 
 export function useDashboard(): DashboardState {
@@ -26,7 +26,7 @@ export function useDashboard(): DashboardState {
           if (stopped) break
           const latest = await apiFetch<ScenarioResponse>('/scenarios/me')
           if (latest.narrative_ready && latest.narratives) {
-            setState({ status: 'narrative_ready', mathData: latest.math_data, narratives: latest.narratives })
+            setState({ status: 'narrative_ready', mathData: latest.math_data, narratives: latest.narratives, sources: latest.sources })
             return
           }
         }

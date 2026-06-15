@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import { useDashboard } from './useDashboard'
 import { ScenarioCards } from './ScenarioCards'
 import { NarrativeSection } from './NarrativeSection'
+import { SourcesSection } from './SourcesSection'
 
 const ScenarioChart = dynamic(
   () => import('./ScenarioChart').then(m => ({ default: m.ScenarioChart })),
@@ -26,6 +27,7 @@ export default function DashboardPage() {
 
   const mathData = state.mathData
   const narratives = state.status === 'narrative_ready' ? state.narratives : null
+  const sources = state.status === 'narrative_ready' ? state.sources : null
   const ready = state.status === 'narrative_ready'
 
   return (
@@ -34,6 +36,7 @@ export default function DashboardPage() {
       <ScenarioCards mathData={mathData} />
       <ScenarioChart mathData={mathData} />
       <NarrativeSection narratives={narratives} ready={ready} />
+      <SourcesSection sources={sources} />
     </main>
   )
 }

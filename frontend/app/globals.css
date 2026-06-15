@@ -148,3 +148,20 @@ form input:focus { border-color: var(--accent); }
 .skeleton-line { height: 14px; border-radius: 4px; width: 100%; margin-bottom: 8px;
   background: linear-gradient(90deg, var(--border) 25%, #e8edf2 50%, var(--border) 75%);
   background-size: 400px 100%; animation: shimmer 1.4s infinite; }
+
+/* ── Sources ── */
+.sources-section { background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); }
+.sources-summary { font-size: 12px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; user-select: none; list-style: none; }
+.sources-summary::-webkit-details-marker { display: none; }
+.sources-summary::before { content: '▶ '; font-size: 10px; }
+details[open] .sources-summary::before { content: '▼ '; }
+.sources-list { margin: 10px 0 0; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 6px; }
+.sources-item { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; font-size: 12px; }
+.sources-title { color: var(--text-muted); }
+.sources-badge { background: var(--accent-light); color: var(--accent);
+  font-size: 10px; font-weight: 700; padding: 2px 6px;
+  border-radius: 4px; white-space: nowrap; }
