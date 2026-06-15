@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -15,7 +16,7 @@ from app.scenarios.service import _build_fallback, _build_prompt, _fmt_eur
 
 logger = logging.getLogger(__name__)
 
-MESI = {
+MONTHS = {
     1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
     5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
     9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre",
@@ -44,7 +45,7 @@ async def send_digest_email(
         return
 
     now = datetime.now(timezone.utc)
-    subject = f"Il tuo aggiornamento mensile Clara — {MESI[now.month]} {now.year}"
+    subject = f"Il tuo aggiornamento mensile Clara — {MONTHS[now.month]} {now.year}"
 
     html = f"""<p>Ciao {to_email},</p>
 <p>Il tuo piano finanziario aggiornato per <strong>{profile.horizon_years} anni</strong>.</p>
@@ -107,11 +108,12 @@ async def run_monthly_digest(db: Session) -> dict:
 
             # 2. Dedup: skip se già inviato questo mese
             existing = db.execute(
-                select(Scenario)
+                select(Scenario.id)
                 .where(Scenario.user_id == user_id)
                 .where(extract("year", Scenario.generated_at) == now.year)
                 .where(extract("month", Scenario.generated_at) == now.month)
-            ).scalar_one_or_none()
+                .limit(1)
+            ).first()
             if existing:
                 skipped += 1
                 continue
@@ -155,7 +157,8 @@ async def run_monthly_digest(db: Session) -> dict:
             if settings.anthropic_api_key:
                 try:
                     ai = Anthropic(api_key=settings.anthropic_api_key)
-                    response = ai.messages.create(
+                    response = await asyncio.to_thread(
+                        ai.messages.create,
                         model=settings.claude_model,
                         max_tokens=1024,
                         timeout=30,
