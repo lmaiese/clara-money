@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_days: int = 7
     anthropic_api_key: str = ""
+    openai_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 

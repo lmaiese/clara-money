@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 from app.database import Base
 
 
@@ -58,3 +59,17 @@ class Scenario(Base):
     math_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     narratives: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     narrative_ready: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sources: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()")
+    )
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    source: Mapped[str] = mapped_column(String, nullable=False)
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    embedding = mapped_column(Vector(1536), nullable=True)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
