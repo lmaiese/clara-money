@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     resend_api_key: str = ""
+    digest_secret: str = ""
     frontend_url: str = "http://localhost:3000"
     cookie_secure: bool = False
     allowed_origins: list[str] = ["http://localhost:3000"]
