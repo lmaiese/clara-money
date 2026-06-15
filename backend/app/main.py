@@ -8,6 +8,7 @@ from app.scenarios.router import router as scenarios_router
 from app.billing.router import protected_router as billing_protected_router
 from app.billing.router import webhook_router as billing_webhook_router
 from app.admin.router import router as admin_router
+from app.waitlist.router import router as waitlist_router
 from app.config import settings, JWT_SECRET_IS_DEV_DEFAULT
 
 logger = logging.getLogger(__name__)
@@ -36,3 +37,4 @@ app.include_router(scenarios_router, prefix="/scenarios", tags=["scenarios"])
 app.include_router(billing_protected_router, tags=["billing"])
 app.include_router(billing_webhook_router, tags=["billing"])
 app.include_router(admin_router, tags=["admin"])
+app.include_router(waitlist_router, tags=["waitlist"])
