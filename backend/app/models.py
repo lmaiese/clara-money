@@ -22,7 +22,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     plan: Mapped[str] = mapped_column(
-        String(10), nullable=False, default="free", server_default="free"
+        String(10), nullable=False, default="free", server_default="'free'"
     )
 
     profile: Mapped["Profile"] = relationship(back_populates="user", uselist=False)
