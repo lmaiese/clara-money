@@ -23,6 +23,7 @@ def generate(
         narratives=scenario.narratives,
         narrative_ready=scenario.narrative_ready,
         generated_at=scenario.generated_at,
+        sources=None,
     )
 
 
@@ -40,4 +41,5 @@ def get_my_scenario(
         narratives=scenario.narratives,
         narrative_ready=scenario.narrative_ready,
         generated_at=scenario.generated_at,
+        sources=scenario.sources,
     )

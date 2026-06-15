@@ -76,11 +76,17 @@ class ProfileResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class Source(BaseModel):
+    title: str
+    source: str
+
+
 class ScenarioResponse(BaseModel):
     scenario_id: uuid.UUID
     math_data: dict
     narratives: dict | None
     narrative_ready: bool
     generated_at: datetime
+    sources: list[Source] | None = None
 
     model_config = {"from_attributes": True}

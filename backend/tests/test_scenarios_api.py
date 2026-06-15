@@ -34,8 +34,10 @@ def test_generate_creates_scenario_in_db(client):
     with patch("app.scenarios.service._run_narrative_generation"):
         res = client.post("/scenarios/generate")
     assert res.status_code == 200
-    assert "scenario_id" in res.json()
-    assert res.json()["narrative_ready"] is False
+    data = res.json()
+    assert "scenario_id" in data
+    assert data["narrative_ready"] is False
+    assert "sources" in data  # campo presente (può essere null)
 
 
 def test_get_me_returns_latest_scenario(client):

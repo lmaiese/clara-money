@@ -42,17 +42,27 @@ def _build_fallback(profile: SimpleNamespace, math_data: MathData) -> dict:
     }
 
 
-def _build_prompt(profile: SimpleNamespace, math_data: MathData) -> str:
+def _build_prompt(profile: SimpleNamespace, math_data: MathData, contexts: dict | None = None) -> str:
     investments_note = (
         f"Nota: l'utente ha già {profile.existing_investments}€ investiti — citalo come contesto."
         if (profile.existing_investments or 0) > 0
         else ""
     )
+
+    normative_section = ""
+    if contexts:
+        lines = ["", "Contesto normativo di riferimento (usa solo se pertinente, non citare testualmente):"]
+        for scenario_type, docs in contexts.items():
+            chunks = " / ".join(d.content[:200] for d in docs)
+            lines.append(f"{scenario_type.capitalize()}: {chunks}")
+        normative_section = "\n".join(lines)
+
     return f"""Sei Clara, consulente finanziaria italiana semplice e diretta.
 L'utente ha {profile.age} anni, reddito netto {profile.monthly_income}€/mese,
 spese {profile.monthly_expenses}€/mese, risparmi liquidi {profile.liquid_savings}€,
 obiettivo: {profile.goal}, orizzonte: {profile.horizon_years} anni.
 {investments_note}
+{normative_section}
 
 Hai calcolato 3 scenari. Per ognuno scrivi 2-3 frasi in italiano semplice:
 cosa significa il valore finale, che categoria di strumento si usa, rischio in una parola.
@@ -74,6 +84,22 @@ def _run_narrative_generation(scenario_id: str, profile_data: dict, math_data: M
             return
 
         profile = SimpleNamespace(**profile_data)
+
+        # RAG retrieval — skip silently on any error
+        contexts: dict = {}
+        sources: list = []
+        try:
+            from app.rag.retrieval import retrieve_all_contexts
+            contexts = retrieve_all_contexts(db)
+            seen: set[str] = set()
+            for docs in contexts.values():
+                for doc in docs:
+                    if doc.title not in seen:
+                        seen.add(doc.title)
+                        sources.append({"title": doc.title, "source": doc.source})
+        except Exception:
+            pass
+
         narratives = None
 
         if settings.anthropic_api_key:
@@ -83,7 +109,7 @@ def _run_narrative_generation(scenario_id: str, profile_data: dict, math_data: M
                 response = client.messages.create(
                     model="claude-sonnet-4-6",
                     max_tokens=1024,
-                    messages=[{"role": "user", "content": _build_prompt(profile, math_data)}],
+                    messages=[{"role": "user", "content": _build_prompt(profile, math_data, contexts)}],
                 )
                 parsed = json.loads(response.content[0].text)
                 _REQUIRED = {"intro", "sicuro", "bilanciato", "crescita"}
@@ -97,6 +123,7 @@ def _run_narrative_generation(scenario_id: str, profile_data: dict, math_data: M
 
         scenario.narratives = narratives
         scenario.narrative_ready = True
+        scenario.sources = sources if sources else None
         db.commit()
     finally:
         db.close()
