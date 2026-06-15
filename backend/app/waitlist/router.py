@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -18,15 +18,14 @@ def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
     email = body.email.lower()
     existing = db.query(Waitlist).filter_by(email=email).first()
     if existing:
-        raise HTTPException(status_code=409, detail="Email già in lista")
+        raise HTTPException(status_code=409, detail="Email already registered")
     db.add(Waitlist(email=email))
     db.commit()
-    return {"message": "Iscritto con successo"}
+    return {"message": "Subscribed successfully"}
 
 
 @router.get("/admin/waitlist")
 def get_waitlist(
-    request: Request,
     db: Session = Depends(get_db),
     _: None = Depends(_verify_secret),
 ):

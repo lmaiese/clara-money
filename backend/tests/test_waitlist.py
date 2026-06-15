@@ -13,7 +13,7 @@ def admin_secret(monkeypatch):
 def test_join_waitlist_success(client, db):
     resp = client.post("/waitlist", json={"email": "test@example.com"})
     assert resp.status_code == 200
-    assert resp.json() == {"message": "Iscritto con successo"}
+    assert resp.json() == {"message": "Subscribed successfully"}
     entry = db.query(Waitlist).filter_by(email="test@example.com").first()
     assert entry is not None
 
@@ -43,3 +43,19 @@ def test_get_waitlist_returns_list(client, db, admin_secret):
     assert data["count"] == 2
     assert "a@example.com" in data["emails"]
     assert "b@example.com" in data["emails"]
+
+
+def test_join_waitlist_normalizes_email(client, db):
+    client.post("/waitlist", json={"email": "TEST@EXAMPLE.COM"})
+    resp = client.post("/waitlist", json={"email": "test@example.com"})
+    assert resp.status_code == 409
+    entry = db.query(Waitlist).filter_by(email="test@example.com").first()
+    assert entry is not None
+
+
+def test_get_waitlist_empty(client, admin_secret):
+    resp = client.get("/admin/waitlist", headers=AUTH)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["count"] == 0
+    assert data["emails"] == []
