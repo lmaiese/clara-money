@@ -79,3 +79,13 @@ class Document(Base):
     content: Mapped[str] = mapped_column(String, nullable=False)
     embedding = mapped_column(Vector(1536), nullable=True)
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Waitlist(Base):
+    __tablename__ = "waitlist"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()")
+    )
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
