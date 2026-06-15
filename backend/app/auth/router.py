@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Profile
-from app.schemas import RegisterRequest, LoginRequest
+from app.schemas import RegisterRequest, LoginRequest, UserResponse
 from app.auth.service import hash_password, verify_password, create_token
 from app.auth.dependencies import get_current_user
 from app.config import settings
@@ -42,3 +42,8 @@ def login(body: LoginRequest, response: Response, db: Session = Depends(get_db))
 def logout(response: Response, _=Depends(get_current_user)):
     response.delete_cookie("access_token")
     return {"message": "logged out"}
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(user: User = Depends(get_current_user)):
+    return user

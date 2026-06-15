@@ -21,6 +21,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UserResponse(BaseModel):
+    id: uuid.UUID
+    email: str
+    plan: str
+
+    model_config = {"from_attributes": True}
+
+
 class ProfilePatch(BaseModel):
     age: int | None = None
     monthly_income: int | None = None

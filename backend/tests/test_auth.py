@@ -35,3 +35,18 @@ def test_logout_clears_cookie(client):
     res = client.post("/auth/logout")
     assert res.status_code == 200
     assert res.cookies.get("access_token", "") == ""
+
+
+def test_me_returns_user_with_plan(client):
+    client.post("/auth/register", json={"email": "me@test.com", "password": "password123"})
+    res = client.get("/auth/me")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["email"] == "me@test.com"
+    assert data["plan"] == "free"
+    assert "id" in data
+
+
+def test_me_unauthenticated_returns_401(client):
+    res = client.get("/auth/me")
+    assert res.status_code == 401
