@@ -28,7 +28,9 @@ function WaitlistForm({ variant }: { variant: 'hero' | 'bottom' }) {
   return (
     <div>
       <form className={`waitlist-form waitlist-form--${variant}`} onSubmit={handleSubmit}>
+        <label htmlFor={`waitlist-email-${variant}`} className="sr-only">Indirizzo email</label>
         <input
+          id={`waitlist-email-${variant}`}
           type="email"
           placeholder="La tua email"
           value={email}
