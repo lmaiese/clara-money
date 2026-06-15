@@ -1,4 +1,5 @@
 import asyncio
+import uuid as _uuid
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -46,9 +47,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     if event["type"] == "checkout.session.completed":
         session_obj = event["data"]["object"]
-        user_id = session_obj.get("client_reference_id")
+        raw_user_id = session_obj.get("client_reference_id")
         stripe_customer_id = session_obj.get("customer")
-        if user_id:
+        if raw_user_id:
+            try:
+                user_id = _uuid.UUID(raw_user_id)
+            except ValueError:
+                return {"status": "ok"}
             user = db.get(User, user_id)
             if user:
                 user.plan = "pro"
