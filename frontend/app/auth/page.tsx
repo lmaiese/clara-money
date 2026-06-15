@@ -59,6 +59,11 @@ export default function AuthPage() {
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Caricamento...' : mode === 'register' ? 'Inizia gratis' : 'Accedi'}
           </button>
+          {mode === 'login' && (
+            <a href="/auth/forgot-password" className="forgot-link">
+              Password dimenticata?
+            </a>
+          )}
         </form>
       </div>
     </main>
