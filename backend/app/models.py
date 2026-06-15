@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean, text
+from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean, text, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
@@ -20,10 +20,16 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    stripe_customer_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    plan: Mapped[str] = mapped_column(String, default="free")
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    plan: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="free", server_default="free"
+    )
 
     profile: Mapped["Profile"] = relationship(back_populates="user", uselist=False)
+
+    __table_args__ = (
+        CheckConstraint("plan IN ('free', 'pro')", name="ck_users_plan"),
+    )
 
 
 class Profile(Base):
