@@ -1,7 +1,9 @@
 from typing import TypedDict
+from app.constants import SCENARIO_KEYS
 
 
 RATES: dict[str, float] = {"sicuro": 0.035, "bilanciato": 0.05, "crescita": 0.07}
+assert set(RATES) == set(SCENARIO_KEYS), "RATES keys must match SCENARIO_KEYS"
 INFLATION_RATE = 0.025
 
 

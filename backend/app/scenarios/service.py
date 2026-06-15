@@ -107,7 +107,7 @@ def _run_narrative_generation(scenario_id: str, profile_data: dict, math_data: M
                 from anthropic import Anthropic
                 client = Anthropic(api_key=settings.anthropic_api_key)
                 response = client.messages.create(
-                    model="claude-sonnet-4-6",
+                    model=settings.claude_model,
                     max_tokens=1024,
                     messages=[{"role": "user", "content": _build_prompt(profile, math_data, contexts)}],
                 )

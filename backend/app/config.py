@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     jwt_expire_days: int = 7
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    claude_model: str = "claude-sonnet-4-6"
     cookie_secure: bool = False
     allowed_origins: list[str] = ["http://localhost:3000"]
 

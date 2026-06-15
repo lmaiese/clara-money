@@ -1,12 +1,15 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.config import settings
+from app.constants import SCENARIO_KEYS  # noqa: F401
 
 RETRIEVAL_QUERIES: dict[str, str] = {
     "sicuro":     "conti deposito BTP obbligazioni garantite normativa italiana rendimento",
     "bilanciato": "ETF obbligazionario misto MiFID II consulenza finanziaria rischio moderato",
     "crescita":   "ETF azionario globale CONSOB rischio mercato orizzonte lungo termine",
 }
+
+assert set(RETRIEVAL_QUERIES) == set(SCENARIO_KEYS), "RETRIEVAL_QUERIES keys must match SCENARIO_KEYS"
 
 MAX_DISTANCE = 0.35
 
