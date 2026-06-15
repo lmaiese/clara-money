@@ -26,3 +26,9 @@ export interface ScenarioResponse {
   generated_at: string
   sources: Source[] | null
 }
+
+export interface User {
+  id: string
+  email: string
+  plan: 'free' | 'pro'
+}
