@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from app.admin.router import _verify_secret
+from app.dependencies import verify_admin_secret
 from app.database import get_db
 from app.models import Waitlist
 
@@ -27,7 +27,7 @@ def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
 @router.get("/admin/waitlist")
 def get_waitlist(
     db: Session = Depends(get_db),
-    _: None = Depends(_verify_secret),
+    _: None = Depends(verify_admin_secret),
 ):
     entries = db.query(Waitlist).order_by(Waitlist.joined_at.desc()).all()
     return {
