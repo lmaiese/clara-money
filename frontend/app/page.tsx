@@ -78,17 +78,34 @@ export default function HomePage() {
         <p className="landing-section-sub">Niente consulenti bancari. Niente prodotti da vendere. Solo matematica.</p>
         <div className="feature-grid">
           <div className="feature-card">
-            <div className="feature-icon">3S</div>
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="12" width="4" height="8" rx="1"/>
+                <rect x="10" y="7" width="4" height="13" rx="1"/>
+                <rect x="17" y="3" width="4" height="17" rx="1"/>
+              </svg>
+            </div>
             <h3>3 scenari reali</h3>
             <p>Sicuro, bilanciato, crescita — con rendimenti storici documentati, anno per anno fino al tuo orizzonte.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">AI</div>
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 3l1.88 5.12L19 10l-5.12 1.88L12 17l-1.88-5.12L5 10l5.12-1.88z"/>
+                <path d="M19 17l.75 1.75L21.5 19.5l-1.75.75L19 22l-.75-1.75L16.5 19.5l1.75-.75z"/>
+                <path d="M5 4.5l.63 1.37L7 6.5l-1.37.63L5 8.5l-.63-1.5L3 6.5l1.37-.63z"/>
+              </svg>
+            </div>
             <h3>Narrativa AI</h3>
             <p>Claude (Anthropic) spiega ogni scenario in italiano semplice, adattato alla tua età e ai tuoi obiettivi.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">1°</div>
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
             <h3>Aggiornamento mensile</h3>
             <p>Ogni mese ricevi un digest con i tuoi scenari aggiornati e il delta rispetto al mese precedente.</p>
           </div>
